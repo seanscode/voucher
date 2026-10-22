@@ -1,3 +1,7 @@
+### other
+target/
+.idea/
+
 ### IntelliJ IDEA ###
 out/
 !**/src/main/**/out/
