@@ -24,6 +24,7 @@ class Main {
                 voucher_count BIGINT NOT NULL DEFAULT 0
             );
             """;
+    private static final String INIT_COUNT = "INSERT INTO voucher_count (voucher_count) VALUES (0);";
 
     static void main(String[] args) {
         Vertx vertx = Vertx.vertx();
@@ -37,14 +38,14 @@ class Main {
         Pool pool = JDBCPool.pool(vertx, jdbcConnectOptions, poolOptions);
         Future<RowSet<Row>> createUserTable = pool.preparedQuery(CREATE_USER_TABLE).execute();
         Future<RowSet<Row>> createCountTable = pool.preparedQuery(CREATE_COUNT_TABLE).execute().compose(rs->
-                pool.preparedQuery("INSERT INTO voucher_count (voucher_count) VALUES (0);").execute());
+                pool.preparedQuery(INIT_COUNT).execute());
 
         Future<String> deploy = Future.all(createUserTable, createCountTable)
                 .compose(result -> vertx.deployVerticle(new VoucherVerticle(pool, 8888)).compose(m ->
                         vertx.deployVerticle(new VoucherVerticle(pool, 8889))));
 
         deploy
-                .onSuccess(id -> System.out.println("VoucherVerticle deployed: " + id))
+                .onSuccess(id -> System.out.println("Voucher Verticle deployed: " + id))
                 .onFailure(Throwable::printStackTrace);
     }
 }

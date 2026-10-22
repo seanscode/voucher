@@ -14,7 +14,7 @@ public class VoucherIssuerHandler implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext rc) {
-        String userId = rc.pathParam("userId");
+        Long userId = Long.valueOf(rc.pathParam("userId"));
         userVoucherDao.getUserVoucher(userId).onSuccess(userVoucher -> {
             rc.response().setStatusCode(200).end(userVoucher.voucherCode());
         }).onFailure(t -> {

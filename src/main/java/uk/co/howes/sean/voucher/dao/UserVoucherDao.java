@@ -7,13 +7,14 @@ import io.vertx.sqlclient.Tuple;
 import uk.co.howes.sean.voucher.data.UserVoucher;
 import uk.co.howes.sean.voucher.execption.VoucherLimitException;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 
 import java.util.List;
 import java.util.UUID;
 
 public class UserVoucherDao {
-    private static final String MAX = "1000000";
+    private static final String MAX = "1000000"; // move to guice config
 
     private static final String INSERT_VOUCHER = "INSERT INTO user_vouchers (user_id, voucher_id) VALUES (?, ?);";
     private static final String USER_VOUCHERS = "SELECT * FROM user_vouchers";
@@ -25,7 +26,7 @@ public class UserVoucherDao {
         this.pool = pool;
     }
 
-    public Future<UserVoucher> getUserVoucher(String userId) {
+    public Future<UserVoucher> getUserVoucher(Long userId) {
         return pool.withTransaction(connection ->
                 connection.preparedQuery(UPDATE_COUNT).execute()
                         .compose(rowSet -> {
@@ -41,14 +42,14 @@ public class UserVoucherDao {
 
     public Future<List<UserVoucher>> getAllUserVouchers() {
         return pool.preparedQuery(USER_VOUCHERS).execute()
-                .compose(rowSet -> {
+                .map(rowSet -> {
                     List<UserVoucher> userVoucherList = new ArrayList<>();
                     for (Row row : rowSet) {
-                        UserVoucher userVoucher = new UserVoucher(row.getLong(0).toString(), row.getString(1));
+                        UserVoucher userVoucher = new UserVoucher(row.getLong(0), row.getString(1));
                         userVoucherList.add(userVoucher);
                     }
-                    return Future.succeededFuture(userVoucherList);
-                }).onFailure(Future::failedFuture);
+                    return userVoucherList;
+                });
 
     }
 

@@ -2,7 +2,11 @@ package uk.co.howes.sean.voucher.dao;
 
 import io.vertx.core.Future;
 import io.vertx.sqlclient.Pool;
+import io.vertx.sqlclient.Row;
 import uk.co.howes.sean.voucher.data.VoucherCount;
+import uk.co.howes.sean.voucher.execption.VoucherCountException;
+
+import java.util.Optional;
 
 public class VoucherCountDao {
 
@@ -15,10 +19,14 @@ public class VoucherCountDao {
     }
 
     public Future<VoucherCount> getVoucherCount() {
-        return pool.preparedQuery(VOUCHER_COUNT).execute().compose(rs -> {
-                    Integer count = rs.stream().iterator().next().getInteger(0);
-                    return Future.succeededFuture(new VoucherCount(count));
-                })
-                .onFailure(Future::failedFuture);
+        return pool.preparedQuery(VOUCHER_COUNT).execute().map(rs -> {
+            Optional<Row> first = rs.stream().findFirst();
+            if (first.isPresent()) {
+                Integer count = first.get().getInteger(0);
+                return new VoucherCount(count);
+            } else {
+                throw new VoucherCountException();
+            }
+        });
     }
 }
